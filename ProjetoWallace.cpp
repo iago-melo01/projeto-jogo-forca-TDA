@@ -4,11 +4,7 @@
 #include <time.h>
 #include <windows.h>
 #include <ctype.h>
-
-typedef struct {
-    char palavra[20];
-    char dica[100];
-} Palavra;
+#include "banco.h"
 
 void desenhaForca(int erros) {
     printf(" _______\n");
@@ -44,6 +40,10 @@ char lerLetraValida(char* arrayLetrasTentadas, int* quantidade_letras_tentadas) 
         scanf_s(" %c", &letra, 1);
         letra = tolower(letra);
 
+        if (letra == '0') {
+            return '0';
+        }
+
         int ja_tentou = 0;
         for (int i = 0; i < *quantidade_letras_tentadas; i++) {
             if (arrayLetrasTentadas[i] == letra) {
@@ -71,9 +71,10 @@ int tamanhoPalavra(Palavra objeto) {
     return contador;
 }
 
-void jogarRodada(Palavra objeto) {
+int jogarRodada(Palavra objeto) {
     int tamanho = tamanhoPalavra(objeto);
     char exibicao[20];
+
     for (int i = 0; i < tamanho; i++) {
         exibicao[i] = '_';
     }
@@ -85,7 +86,6 @@ void jogarRodada(Palavra objeto) {
     int quantidade_erros = 0;
 
     while (quantidade_erros < 6 && acertos < tamanho) {
-        int encontrou_letra = 0;
         system("cls");
 
         desenhaForca(quantidade_erros);
@@ -97,18 +97,24 @@ void jogarRodada(Palavra objeto) {
             printf("%c ", exibicao[i]);
         }
 
-        printf("\n\nAdvinhe uma letra da palavra!\n");
+        printf("\n\nAdvinhe uma letra da palavra ou aperte '0' para sair!\n");
         char letra = lerLetraValida(letrasTentadas, &quantidade_letras_tentadas);
+
+        if (letra == '0') {
+            return 1; // voltar ao menu
+        }
+
+        int encontrou = 0;
 
         for (int i = 0; i < tamanho; i++) {
             if (letra == objeto.palavra[i] && letra != exibicao[i]) {
                 exibicao[i] = letra;
                 acertos++;
-                encontrou_letra = 1;
+                encontrou = 1;
             }
         }
 
-        if (!encontrou_letra) {
+        if (!encontrou) {
             printf("\nLetra não existe na palavra\n");
             quantidade_erros++;
             Sleep(1000);
@@ -119,41 +125,88 @@ void jogarRodada(Palavra objeto) {
     desenhaForca(quantidade_erros);
 
     if (acertos == tamanho) {
-        printf("Parabéns Você acertou a Palavra: %s", objeto.palavra);
+        printf("Parabéns! Você acertou a Palavra: %s\n", objeto.palavra);
     }
     else {
-        printf("Você foi enforcado");
+        printf("Você foi enforcado!\n");
     }
+
+    return 0; // rodada terminou normalmente
 }
 
 int sorteio(int max) {
     return rand() % max;
 }
 
+void menu() {
+    printf("----- MENU ------\n");
+    printf("1 - Criar palavra e dica\n");
+    printf("2 - Jogar\n");
+    printf("3 - Ver ranking\n");
+    printf("4 - Sair\n");
+    printf("-----------------\n");
+}
+
 int main() {
     setlocale(LC_ALL, "");
     srand((unsigned)time(NULL));
 
-    Palavra banco[] = {
-        {"mouse",   "Dispositivo usado para mover o cursor na tela"},
-        {"teclado", "Periférico cheio de teclas"},
-        {"monitor", "Exibe as imagens do computador"},
-        {"fone",    "Usado para ouvir áudio"}
-    };
-
+    int acao_menu;
     char continuar;
+    char palavra_digitada[20];
+    char dica_digitada[100];
 
     while (1) {
-        int indice = sorteio(4);
-        Palavra escolhida = banco[indice];
+        system("cls");
+        menu();
+        scanf_s(" %d", &acao_menu);
 
-        jogarRodada(escolhida);
+        switch (acao_menu) {
 
-        printf("\n\nDeseja Continuar ? (Y/N) ");
-        scanf_s(" %c", &continuar, 1);
+        case 1:
+            printf("Digite uma palavra (sem espaços):\n");
+            scanf_s("%19s", palavra_digitada, (unsigned)_countof(palavra_digitada));
 
-        if (continuar == 'N' || continuar == 'n') {
+            printf("Digite uma dica (pode ter espaços):\n");
+            getchar();
+            fgets(dica_digitada, 100, stdin);
+
+            Palavra criada;
+
+            strcpy_s(criada.palavra, sizeof(criada.palavra), palavra_digitada);
+            strcpy_s(criada.dica, sizeof(criada.dica), dica_digitada);
+
+            jogarRodada(criada);
             break;
+
+        case 2:
+            while (1) {
+                
+                int indice = sorteio(banco_tamanho);
+                Palavra escolhida = banco[indice];
+
+                int saiu = jogarRodada(escolhida);
+                if (saiu == 1) break;
+
+                printf("\nDeseja continuar jogando? (Y/N): ");
+                scanf_s(" %c", &continuar, 1);
+
+                if (continuar == 'N' || continuar == 'n') {
+                    break;
+                }
+            }
+            break;
+
+        case 3:
+            printf("Ranking ainda não implementado.\n");
+            break;
+
+        case 4:
+            printf("Saindo...\n");
+            return 0;
+
+        default:
+            printf("Opção inválida!\n");
         }
     }
 
