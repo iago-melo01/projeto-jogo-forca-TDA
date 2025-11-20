@@ -17,8 +17,7 @@ void faz_linhas(int tamanho_palavra,char * palavra) {// Função que recebe o núme
 	int acertos = 0;
 	int limite_erros = 0;
 	char letra;
-
-	while (limite_erros <= 6 && acertos <= tamanho_palavra) {
+	while(limite_erros < 5 && acertos < tamanho_palavra) {
 		int encontrou_letra = 0;
 		system("cls");
 		printf("Palavra Misteriosa \n");
@@ -27,7 +26,7 @@ void faz_linhas(int tamanho_palavra,char * palavra) {// Função que recebe o núme
 		}
 
 		printf("\nAdvinhe uma letra da palavra!\n");
-		scanf_s("%c", &letra);
+		scanf_s(" %c", &letra);
 
 		for (int i = 0; i < tamanho_palavra; i++) {
 			if (letra == palavra[i] && letra != exibicao[i]) {
@@ -37,8 +36,9 @@ void faz_linhas(int tamanho_palavra,char * palavra) {// Função que recebe o núme
 			}
 		}
 		if (encontrou_letra == 0) {
-			printf("Letra não existe na palavra");
+			printf("\nLetra não existe na palavra\n");
 			limite_erros++;
+			Sleep(1500);
 		}
 	}
 	if (acertos == tamanho_palavra) {
@@ -58,12 +58,19 @@ int sorteio() {
 int main() {
 
 	char banco[][10] = {"mouse","teclado","monitor","fone"};
+	char continuar;
+	while (1) {
+		int palavraint = sorteio();
+		int contador = 0;// quantidade de letras da palavra sorteada
+		while (banco[palavraint][contador] != '\0') {
+			contador += 1;
+		}
+		faz_linhas(contador, banco[palavraint]);// Printa as linhas da palavras
+		printf("\n Deseja Continuar ? (Y/N)");
+		scanf_s(" %c",&continuar);
 
-	int palavraint = sorteio();
-	int contador = 0;// quantidade de letras da palavra sorteada
-	while (banco[palavraint][contador] != '\0') {
-		contador += 1;
+		if (continuar == 'N') {
+			break;
+		}
 	}
-
-	faz_linhas(contador,banco[palavraint]);// Printa as linhas da palavras
 }
