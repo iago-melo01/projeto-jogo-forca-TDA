@@ -1,9 +1,11 @@
+ï»¿#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
 #include <time.h>
 #include <windows.h>
 #include <ctype.h>
+#include <string.h>
 #include "banco.h"
 
 void desenhaForca(int erros) {
@@ -53,7 +55,7 @@ char lerLetraValida(char* arrayLetrasTentadas, int* quantidade_letras_tentadas) 
         }
 
         if (ja_tentou) {
-            printf("Essa letra já foi tentada, tente outra: ");
+            printf("Essa letra jÃ¡ foi tentada, tente outra: ");
         }
         else {
             arrayLetrasTentadas[*quantidade_letras_tentadas] = letra;
@@ -69,6 +71,60 @@ int tamanhoPalavra(Palavra objeto) {
         contador++;
     }
     return contador;
+}
+
+void salvarRanking(char nome[]) {
+    FILE* arquivo;
+    FILE* temp;
+    char nome_lido[50];
+    int vitorias;
+    int encontrado = 0;
+
+    arquivo = fopen("ranking.txt", "r");
+    temp = fopen("temp.txt", "w");
+
+    if (arquivo != NULL) {
+        while (fscanf(arquivo, "%49s %d", nome_lido, &vitorias) == 2) {
+            if (strcmp(nome_lido, nome) == 0) {
+                vitorias++;
+                encontrado = 1;
+            }
+            fprintf(temp, "%s %d\n", nome_lido, vitorias);
+        }
+        fclose(arquivo);
+    }
+
+    if (!encontrado) {
+        fprintf(temp, "%s %d\n", nome, 1);
+    }
+
+    fclose(temp);
+
+    remove("ranking.txt");
+    rename("temp.txt", "ranking.txt");
+}
+
+void mostrarRanking() {
+    FILE* arquivo;
+    char nome[50];
+    int vitorias;
+
+    arquivo = fopen("ranking.txt", "r");
+
+    if (arquivo == NULL) {
+        printf("\nNenhum ranking encontrado ainda.\n\n");
+        return;
+    }
+
+    printf("\n======= RANKING =======\n");
+
+    while (fscanf(arquivo, "%49s %d", nome, &vitorias) == 2) {
+        printf("%s - %d vitÃ³ria(s)\n", nome, vitorias);
+    }
+
+    printf("========================\n\n");
+
+    fclose(arquivo);
 }
 
 int jogarRodada(Palavra objeto) {
@@ -115,7 +171,7 @@ int jogarRodada(Palavra objeto) {
         }
 
         if (!encontrou) {
-            printf("\nLetra não existe na palavra\n");
+            printf("\nLetra nÃ£o existe na palavra\n");
             quantidade_erros++;
             Sleep(1000);
         }
@@ -125,10 +181,22 @@ int jogarRodada(Palavra objeto) {
     desenhaForca(quantidade_erros);
 
     if (acertos == tamanho) {
-        printf("Parabéns! Você acertou a Palavra: %s\n", objeto.palavra);
+        printf("ParabÃ©ns! VocÃª acertou a Palavra: %s\n", objeto.palavra);
+
+        char nome[50];
+
+        printf("Digite seu nome para registrar no ranking:\n");
+        getchar(); // limpa ENTER pendente do scanf_s
+        fgets(nome, 50, stdin);
+
+        nome[strcspn(nome, "\n")] = '\0';
+
+        salvarRanking(nome);
+
+        return 2;
     }
     else {
-        printf("Você foi enforcado!\n");
+        printf("VocÃª foi enforcado!\n");
     }
 
     return 0; // rodada terminou normalmente
@@ -164,10 +232,10 @@ int main() {
         switch (acao_menu) {
 
         case 1:
-            printf("Digite uma palavra (sem espaços):\n");
+            printf("Digite uma palavra (sem espaÃ§os):\n");
             scanf_s("%19s", palavra_digitada, (unsigned)_countof(palavra_digitada));
 
-            printf("Digite uma dica (pode ter espaços):\n");
+            printf("Digite uma dica (pode ter espaÃ§os):\n");
             getchar();
             fgets(dica_digitada, 100, stdin);
 
@@ -181,12 +249,20 @@ int main() {
 
         case 2:
             while (1) {
-                
+
                 int indice = sorteio(banco_tamanho);
                 Palavra escolhida = banco[indice];
 
-                int saiu = jogarRodada(escolhida);
-                if (saiu == 1) break;
+                int resultado = jogarRodada(escolhida);
+
+                if (resultado == 1) break; // saiu com '0'
+                if (resultado == 2) {
+                    // venceu â†’ jÃ¡ perguntou nome â†’ NÃƒO perguntar Y/N
+                    printf("\nPressione ENTER para continuar...");
+                    getchar();
+                    getchar();
+                    continue;
+                }
 
                 printf("\nDeseja continuar jogando? (Y/N): ");
                 scanf_s(" %c", &continuar, 1);
@@ -198,7 +274,8 @@ int main() {
             break;
 
         case 3:
-            printf("Ranking ainda não implementado.\n");
+            mostrarRanking();
+            system("pause");
             break;
 
         case 4:
@@ -206,7 +283,7 @@ int main() {
             return 0;
 
         default:
-            printf("Opção inválida!\n");
+            printf("OpÃ§Ã£o invÃ¡lida!\n");
         }
     }
 
