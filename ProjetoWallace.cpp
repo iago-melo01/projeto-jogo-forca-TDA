@@ -129,7 +129,7 @@ void mostrarRanking() {
 
 int jogarRodada(Palavra objeto) {
     int tamanho = tamanhoPalavra(objeto);
-    char exibicao[20];
+    char* exibicao = (char*)malloc((tamanho + 1) * sizeof(char));
 
     for (int i = 0; i < tamanho; i++) {
         exibicao[i] = '_';
@@ -241,7 +241,7 @@ int main() {
 
             Palavra criada;
 
-            strcpy_s(criada.palavra, sizeof(criada.palavra), palavra_digitada);
+            strcpy_s(criada.palavra, sizeof(criada.palavra), palavra_digitada); 
             strcpy_s(criada.dica, sizeof(criada.dica), dica_digitada);
 
             jogarRodada(criada);
@@ -260,7 +260,7 @@ int main() {
                     // venceu → já perguntou nome → NÃO perguntar Y/N
                     printf("\nPressione ENTER para continuar...");
                     getchar();
-                    getchar();
+                    
                     continue;
                 }
 
